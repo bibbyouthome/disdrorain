@@ -208,7 +208,7 @@ class disdrorain(object):
         _df_.drop(columns=[f"M{-self.bspeed}", f"M{3-self.bspeed}", 'M3', f"M{6-self.bspeed}"], inplace=True)
         return _df_
 
-# instntaneous spectrum method
+# instantaneous spectrum method
     def drop_pdf(self):
         """
         - Purpose: calculate the instntaneous (record per record) drop pdf
