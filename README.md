@@ -20,7 +20,11 @@ An instance of the disdrorain class is created by specifying a
 
 - __time_interval__: the time integration of the disdrometer in seconds (default=60: typical value of a Joss-Valdvogel impact disdrometer).
 
+<<<<<<< HEAD
   __Cspeed__ (default=3.776)  and __bspeed__ (default=0.67):  coefficients for the rain drop terminal velocity formula $v(D)=CD^{b}$ in m/s.  This coefficients are obtained from Eq.(8) of [Atlas&Ulbrich](https://journals.ametsoc.org/doi/pdf/10.1175/1520-0450%281977%29016%3C1322%3APAAIRM%3E2.0.CO%3B2)
+=======
+  __Cspeed__ (default=3.776)  and __bspeed__ (default=0.67):  coefficients for the rain drop terminal velocity formula $v(D)=CD^{b}$ in m/s.  This coefficients are obtained from Eq.(8) of [AtlasUlbrich]([https://journals.ametsoc.org/doi/pdf/10.1175/1520-0450%281977%29016%3C1322%3APAAIRM%3E2.0.CO%3B2](https://journals.ametsoc.org/doi/pdf/10.1175/1520-0450(1977)016<1322%3APAAIRM>2.0.CO%3B2).
+>>>>>>> 12d9e37f3e6e6a2234805cc9b3ab1d91ab684ae2
 
 - __fieldsep__ (default= ' '): The field separator for the disdrometer data set.
 
