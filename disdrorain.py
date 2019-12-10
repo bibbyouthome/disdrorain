@@ -56,19 +56,19 @@ class disdrorain(object):
         self.Cspeed = Cspeed
         self.bspeed = bspeed
 
-    # this attribute is not initialized at time of object class correlation
+    # this attribute is not initialized at time of object class creation
     # but only if requested
     @LazyProperty
     def bulkvar(self):
         return self.bulk_variables()
 
-    # this attribute is not initialized at time of object class correlation
+    # this attribute is not initialized at time of object class creation
     # but only if requested
     @LazyProperty
     def phasespacepar(self):
         return self.phase_space_parameters()
 
-    # this attribute is not initialized at time of object class correlation
+    # this attribute is not initialized at time of object class creation
     # but only if requested
     @LazyProperty
     def spectrum(self):
@@ -77,7 +77,7 @@ class disdrorain(object):
 # Moment Calculator method
     def moment_calculator(self, _alpha_):
         """
-        - Purpose: calculate the alpha-th moment of the drop size distribution record by record
+        - Purpose: calculate the alpha-th moment of the drop size distribution for each record
         - Return: data frame with alpha-th moment as column
         _alpha_: list of moments order (needs to be a python list)
         """
@@ -199,7 +199,7 @@ class disdrorain(object):
             dtype={'N': 'int64', 'Nv': 'float64', 'R': 'float64', 'Z': 'float64', 'W': 'float64', 'r': 'float64',
                    'z': 'float64', 'w': 'float64'})
 
-        # the division by 1000000 is necessary to have catchemnt area in meter squared
+        # the division by 1000000 is necessary to have catchment area in meter squared
         _df_['N'] = self.data.sum(axis=1)
         _df_['Nv'] = 1 / ((self.instrument_area / 1000000) * self.time_interval * self.Cspeed) * _df_.N * _df_[f"M{-self.bspeed}"]  # this is the concentration per unit volume
         _df_['rainfall_rate'] = (PI / 6) * (1 / (self.instrument_area * self.time_interval)) * seconds_in_hour * _df_.N * _df_.M3
@@ -211,7 +211,7 @@ class disdrorain(object):
 # instantaneous spectrum method
     def drop_pdf(self):
         """
-        - Purpose: calculate the instntaneous (record per record) drop pdf
+        - Purpose: calculate the instantaneous drop pdf
         - Return: data frame with pdf value per class (one row per record)
         """
         dropfreq = cp.deepcopy(self.data)
