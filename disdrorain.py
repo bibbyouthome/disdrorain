@@ -200,13 +200,15 @@ class disdrorain(object):
                    'z': 'float64', 'w': 'float64'})
 
         # the division by 1000000 is necessary to have catchment area in meter squared
-        _df_['N'] = self.data.sum(axis=1)
-        _df_['Nv'] = 1 / ((self.instrument_area / 1000000) * self.time_interval * self.Cspeed) * _df_.N * _df_[f"M{-self.bspeed}"]  # this is the concentration per unit volume
-        _df_['rainfall_rate'] = (PI / 6) * (1 / (self.instrument_area * self.time_interval)) * seconds_in_hour * _df_.N * _df_.M3
-        _df_['reflectivity'] = 1 / ((self.instrument_area / 1000000) * self.time_interval * self.Cspeed) * _df_.N * _df_[f"M{6-self.bspeed}"]
-        _df_['lwc'] = 1 / ((self.instrument_area / 1000000) * self.time_interval * self.Cspeed) * _df_.N * _df_[f"M{3-self.bspeed}"]
-        _df_.drop(columns=[f"M{-self.bspeed}", f"M{3-self.bspeed}", 'M3', f"M{6-self.bspeed}"], inplace=True)
-        return _df_
+        NNvbulk['N'] = self.data.sum(axis=1)
+        NNvbulk['Nv'] = 1 / ((self.instrument_area / 1000000) * self.time_interval * self.Cspeed) * NNvbulk.N * _df_[f"M{-self.bspeed}"]  # this is the concentration per unit volume
+        NNvbulk['R'] = (PI / 6) * (1 / (self.instrument_area * self.time_interval)) * seconds_in_hour * NNvbulk.N * _df_.M3
+        NNvbulk['Z'] = 1 / ((self.instrument_area / 1000000) * self.time_interval * self.Cspeed) * NNvbulk.N * _df_[f"M{6-self.bspeed}"]
+        NNvbulk['W'] = 1 / ((self.instrument_area / 1000000) * self.time_interval * self.Cspeed) * NNvbulk.N * _df_[f"M{3-self.bspeed}"]
+        NNvbulk['r'] = NNvbulk['R'] / NNvbulk['N']
+        NNvbulk['z'] = NNvbulk['Z'] / NNvbulk['Nv']
+        NNvbulk['w'] = NNvbulk['W'] / NNvbulk['Nv']
+        return NNvbulk
 
 # instantaneous spectrum method
     def drop_pdf(self):
