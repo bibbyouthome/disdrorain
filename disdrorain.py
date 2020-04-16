@@ -32,20 +32,21 @@ class disdrorain(object):
             Default value is 60 = 1 minute
         # v(D)=Cspeed*D^bspeed -- terminal velocity of drop of diameter D
         """
+
+        # default diameter classes: RD80 Valdvogel
+        default_d = {'C1': [0.313, 0.405], 'C2': [0.405, 0.505], 'C3': [0.505, 0.596], 'C4': [0.596, 0.715],
+            'C5': [0.715, 0.827], 'C6': [0.827, 0.999], 'C7': [0.999, 1.232], 'C8': [1.232, 1.429],
+            'C9': [1.429, 1.582], 'C10': [1.582, 1.748], 'C11': [1.748, 2.077], 'C12': [2.077, 2.441],
+            'C13': [2.441, 2.727], 'C14': [2.727, 3.011], 'C15': [3.011, 3.385], 'C16': [3.385, 3.704],
+            'C17': [3.704, 4.127], 'C18': [4.127, 4.573], 'C19': [4.573, 5.145], 'C20': [5.145, 5.601]}
         if datapath is not None:
             self.data = pd.read_csv(datapath, sep=fieldsep, header=None)
         if dataframe is not None:
             self.data = dataframe.copy()
         self.data.rename(columns=lambda x: 'C' + str(x + 1), inplace=True)
         self.data.index.name = 'record number'
-        if classpath is None:  # RD80 Valdvogel
-            d = {
-                'C1': [0.313, 0.405], 'C2': [0.405, 0.505], 'C3': [0.505, 0.596], 'C4': [0.596, 0.715],
-                'C5': [0.715, 0.827], 'C6': [0.827, 0.999], 'C7': [0.999, 1.232], 'C8': [1.232, 1.429],
-                'C9': [1.429, 1.582], 'C10': [1.582, 1.748], 'C11': [1.748, 2.077], 'C12': [2.077, 2.441],
-                'C13': [2.441, 2.727], 'C14': [2.727, 3.011], 'C15': [3.011, 3.385], 'C16': [3.385, 3.704],
-                'C17': [3.704, 4.127], 'C18': [4.127, 4.573], 'C19': [4.573, 5.145], 'C20': [5.145, 5.601]}
-            self.classlimits = pd.DataFrame(data=d)
+        if classpath is None: # use default diameter classes
+            self.classlimits = pd.DataFrame(data=default_d)
             self.classlimits.rename(index={0: 'left', 1: 'right'}, inplace=True)
         else:
             self.classlimits = pd.read_csv(classpath, sep=fieldsep, header=None)
@@ -92,6 +93,34 @@ class disdrorain(object):
         _df_ = pd.DataFrame(moments_dict)
         return _df_
 
+# Moment Calculator method
+    def moment_calculator_exponential_speed(self, _alpha_,_ncells_=20):
+        """
+        - Purpose: calculate the alpha-th moment of the drop size distribution for each record
+        - Return: data frame with alpha-th moment as column
+        _alpha_: list of moments order (needs to be a python list)
+        """
+
+        moments_dict = dict()
+        drops_per_record = self.data.sum(axis=1)
+        class_df = self.classlimits
+        _array_=np.zeros(class_df.shape[1])
+        for elem in _alpha_:
+            for diamclass in range(0,class_df.shape[1]):
+                class_span = round(class_df.loc['right',class_df.columns[diamclass]]-class_df.loc['left',class_df.columns[diamclass]],3)
+                _delta_ = class_span/_ncells_
+                _sum_ = 0.0
+                for j in range (0,_ncells_):
+                    d_effective = class_df.loc['left',class_df.columns[diamclass]] + (_delta_/2) + j*_delta_
+                    _sum_ = _sum_ + pow(d_effective,elem) / (9.65-10.3*np.exp(-0.6*d_effective))*_delta_
+                _array_[diamclass] = _sum_ / class_span
+            _series_ = pd.Series(_array_,index=class_df.columns)
+                
+            moments_dict[f"M{elem}"] = self.data.dot(_series_) / drops_per_record
+        #print(pd.DataFrame(moments_dict))
+        _df_ = pd.DataFrame(moments_dict)
+        return _df_
+
 # Remove Outliers method
     def outlier_deletion(self, change_original=False):
         """
@@ -105,7 +134,7 @@ class disdrorain(object):
         [60 157 121 124 68 67 74 44 14 10 18 11 0 0 0 0 0 0 0 0]
         - Return: an element of the disdrorain class (A or B).
         A) Change input disdrorain class element by eliminating outliers
-        B) Create new element of disdrorain class equal ti input except for
+        B) Create new element of disdrorain class equal to input except for
         records were outliers are eliminatedself.
         - change_original: flag to decide if disdrorain class element output is
         (A <-> True) or (B <-> False)
@@ -209,6 +238,39 @@ class disdrorain(object):
         NNvbulk['z'] = NNvbulk['Z'] / NNvbulk['Nv']
         NNvbulk['w'] = NNvbulk['W'] / NNvbulk['Nv']
         return NNvbulk
+
+# Bulk Variable method
+    def bulk_variables_exponential_speed(self, _ncells_=20):
+        """
+        - Purpose: calculate for each record the Number of drops (N), the number of drops per unit volume N_V,
+        rainfall rate (R), reflectivity  (Z), liquid water content (W), rainfall rate per unit drop (R/N=r),
+        reflectivity per unit drop (Z/N_V=z), liquid water content per unit drop (W/N_V=w)
+        - Return: data frame with all the above quantities as columns
+        """
+
+        PI = 3.141592653589793  # approximate value of greek pi
+        seconds_in_hour = 3600  # for converting rainfall rate in mm/h
+        list_moments_order = list([3])
+        list_moments_order_expo= list([0, 3, 6])
+        _df_ = self.moment_calculator(list_moments_order)
+        _df_expo = self.moment_calculator_exponential_speed(list_moments_order_expo,_ncells_=_ncells_)
+        # N Nv  R Z W r z w dataframe
+        NNvbulk = pd.DataFrame(columns=['N', 'Nv', 'R', 'Z', 'W', 'r', 'z', 'w'])
+        NNvbulk = NNvbulk.astype(
+            dtype={'N': 'int64', 'Nv': 'float64', 'R': 'float64', 'Z': 'float64', 'W': 'float64', 'r': 'float64',
+                   'z': 'float64', 'w': 'float64'})
+
+        # the division by 1000000 is necessary to have catchment area in meter squared
+        NNvbulk['N'] = self.data.sum(axis=1)
+        NNvbulk['Nv'] = 1 / ((self.instrument_area / 1000000) * self.time_interval) * NNvbulk.N * _df_expo.M0  # this is the concentration per unit volume
+        NNvbulk['R'] = (PI / 6) * (1 / (self.instrument_area * self.time_interval)) * seconds_in_hour * NNvbulk.N * _df_.M3
+        NNvbulk['Z'] = 1 / ((self.instrument_area / 1000000) * self.time_interval) * NNvbulk.N * _df_expo.M6
+        NNvbulk['W'] = 1 / ((self.instrument_area / 1000000) * self.time_interval) * NNvbulk.N * _df_expo.M3
+        NNvbulk['r'] = NNvbulk['R'] / NNvbulk['N']
+        NNvbulk['z'] = NNvbulk['Z'] / NNvbulk['Nv']
+        NNvbulk['w'] = NNvbulk['W'] / NNvbulk['Nv']
+        return NNvbulk
+
 
 # instantaneous spectrum method
     def drop_pdf(self):
