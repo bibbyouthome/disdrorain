@@ -143,10 +143,10 @@ class disdrorain(object):
         (A <-> True) or (B <-> False)
         """
 
-# the clean up function finds
-# 1) the class with max count
-# 2) the class span of consencutive non zero counts which include the class with max count
-# All other counts will be considered outliers
+        # the clean up function finds
+        # 1) the class with max count
+        # 2) the class span of consencutive non zero counts which include the class with max count
+        # All other counts will be considered outliers
         def cleanup(x):
             imax = x.argmax()
             zeroin = np.where(x == 0)[0]
