@@ -21,7 +21,7 @@ class disdrorain(object):
                 instrument_area=5000, time_interval=60, 
                 Aplawspeed=3.776, Bplawspeed=0.67,
                 Aexpospeed=9.65, Bexpospeed=10.3, Cexpospeed=0.6,
-                ncells=20):
+                ncells=25):
         """
         didrorain class
         # classpath = path to disdrometer class limits file
@@ -257,10 +257,10 @@ class disdrorain(object):
 
         # check if we keep original disdrorain class element untouched or not
         if change_original is False:
-            self_no_outliers = cp.deepcopy(self)
-            rainobj = cp.copy(self_no_outliers)
+            # self_no_outliers = cp.deepcopy(self)
+            rainobj = cp.deepcopy(self)
         else:
-            rainobj = cp.copy(self)
+            rainobj = self
 
         sum_prior = rainobj.data.sum(axis=1)  # total number of drops in each record prior to outlier removal
         _matrix_ = rainobj.data.values
@@ -273,17 +273,19 @@ class disdrorain(object):
         _df1_ = pd.DataFrame({'ndrops_prior': sum_prior.values})
         _df2_ = pd.DataFrame({'ndrops_after': sum_after.values})
         summary = _df1_.join(_df2_)
-        summary.loc[summary.ndrops_prior != summary.ndrops_after, 'delta_drops'] = summary.ndrops_after - summary.ndrops_prior
-        summary.loc[summary.ndrops_prior != summary.ndrops_after, 'perc_delta_drops'] = (summary.ndrops_after - summary.ndrops_prior) / summary.ndrops_prior * 100
-        summary_final = summary.loc[summary.ndrops_prior != summary.ndrops_after, :]
+        summary_final = cp.deepcopy(summary.loc[summary.ndrops_prior != summary.ndrops_after, :])
+        summary_final.loc[:, 'delta_drops'] = summary_final.ndrops_after - summary_final.ndrops_prior
+        summary_final.loc[:, 'perc_delta_drops'] = (summary_final.ndrops_after - summary_final.ndrops_prior) / summary_final.ndrops_prior * 100
         summary_final.reset_index(inplace=True)
         summary_final.rename(columns={'index': 'record number'}, inplace=True)
         # create summary data frame -- STOP
 
+        # return rainobj
+
         if change_original is False:
             return rainobj, summary_final
         else:
-            return summary_final
+            return summary
 
 # Remove "too narrow" counts: we keep records where at least _nclmin_=4 classes where occupied
     def remove_narrow(self, _nclmin_=4):
